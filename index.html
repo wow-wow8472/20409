@@ -497,17 +497,34 @@ const SPECIAL_SLOTS = {
   "금9": { type: "act", label: "창체", color: "type-act" }
 };
 
-// Classroom mapping (분반 -> 교실)
+// Classroom mapping (분반+과목) -> 교실  (출처: 안내자료 시트)
 const CLASSROOMS = {
-  "A": "STEM관 A실", "A3": "STEM관 A실",
-  "B": "STEM관 B실", "B3": "STEM관 B실",
-  "C": "STEM관 C실", "C1": "체육관", "C3": "STEM관 C실",
-  "D": "STEM관 D실", "D1": "체육관", "D3": "STEM관 D실",
-  "D21": "D21호", "D22": "D22호",
-  "L": "강의실 L", "L2": "강의실 L2",
-  "M": "강의실 M", "N": "강의실 N", "O": "강의실 O",
-  "W": "강의실 W", "X": "강의실 X", "Y": "강의실 Y", "Z": "강의실 Z"
+  "A": { "(AP)미적분학Ⅰ": "수교1", "(AP)일반물리학Ⅰ": "물교", "(AP)일반화학Ⅰ": "화교" },
+  "A3": { "확률과 통계": "수교2" },
+  "B": { "(AP)미적분학Ⅰ": "수교1", "(AP)일반물리학Ⅰ": "물교", "(AP)일반화학Ⅰ": "화교" },
+  "B3": { "확률과 통계": "수교2" },
+  "C": { "(AP)미적분학Ⅰ": "수교1", "(AP)일반물리학Ⅰ": "물교" },
+  "C1": { "생활스포츠": "체육관" },
+  "C3": { "확률과 통계": "수교2", "알고리즘": "컴실2" },
+  "D": { "(AP)미적분학Ⅰ": "수교1", "(AP)일반화학Ⅰ": "화교" },
+  "D1": { "생활스포츠": "체육관" },
+  "D21": { "Public Speaking": "외교3" },
+  "D22": { "생명과학실험Ⅰ": "생실1" },
+  "D3": { "알고리즘": "컴실1", "물리학Ⅲ": "융RnE" },
+  "L": { "일반생명과학Ⅰ": "생교", "과학문명사": "생실1", "생활속의 공학": "융공3", "생활속의 데이터 분석": "컴실1" },
+  "L2": { "Public Speaking": "외교3" },
+  "M": { "확률과 통계": "수교2", "일반생명과학Ⅰ": "생교", "일반지구과학Ⅰ": "지실2", "사회문제와 인문학적 상상력": "인교1", "생활속의 공학": "융공3" },
+  "N": { "과학문명사": "생실1", "사회문제와 인문학적 상상력": "인교1", "생활속의 공학": "융공3", "생활속의 데이터 분석": "컴실1" },
+  "O": { "미래주제연구": "외교2", "사회문제와 인문학적 상상력": "인교1", "생활속의 공학": "융공3", "생활속의 데이터 분석": "컴실1", "과학문명사": "생실1" },
+  "W": { "경제": "인교3", "문학": "인교1", "영미문화탐구": "외교3", "창의적 디자인Ⅰ": "디자인" },
+  "X": { "경제": "인교3", "문학": "인교2", "창의적 디자인Ⅰ": "디자인", "화법과 작문": "인교1" },
+  "Y": { "경제": "인교3", "영미문화탐구": "외교3", "창의적 디자인Ⅰ": "디자인", "화법과 작문": "인교1" },
+  "Z": { "경제": "인교3", "영미문화탐구": "외교3", "창의적 디자인Ⅰ": "디자인" },
 };
+
+function getClassroom(ban, subject) {
+  return (CLASSROOMS[ban] && CLASSROOMS[ban][subject]) || ban;
+}
 
 // Build period->subject map for ME
 function buildMySchedule() {
@@ -589,7 +606,7 @@ function render() {
         div.setAttribute('data-ban', slot.ban);
         div.onclick = () => openDetail(slot.subject, slot.ban);
 
-        const room = CLASSROOMS[slot.ban] || slot.ban;
+        const room = getClassroom(slot.ban, slot.subject);
         const shortName = slot.subject.length > 7 ? slot.subject.substring(0,7)+'…' : slot.subject;
         div.innerHTML = `
           <span class="cell-name">${shortName}</span>
@@ -663,7 +680,7 @@ function showPanel(subject, ban) {
   subjectEl.textContent = subject;
 
   const times = (BAN_TIMES[ban] || []).join(', ');
-  const room = CLASSROOMS[ban] || ban;
+  const room = getClassroom(ban, subject);
   metaEl.innerHTML = `
     <span class="badge badge-ban">${ban}반</span>
     <span class="badge badge-room">${room}</span>
@@ -691,7 +708,7 @@ function showPanel(subject, ban) {
     html += `<div class="detail-section-title" style="margin-top:24px">📋 다른 반</div>`;
     otherBans.forEach(([b, students]) => {
       const bTimes = (BAN_TIMES[b] || []).join(', ');
-      const bRoom = CLASSROOMS[b] || b;
+      const bRoom = getClassroom(b, subject);
       html += `<div class="other-ban-block">`;
       html += `<div class="other-ban-header"><div class="ban-dot"></div>${b}반 · ${bRoom}${bTimes ? ' · ' + bTimes : ''} (${students.length}명)</div>`;
       html += `<div class="other-friends-grid">`;
