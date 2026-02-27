@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박세현 시간표 · 2026 2학년 1학기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --card: #1e2130;
+    --border: #2a2e3e;
+    --accent: #5b7fff;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --text: #e8eaf6;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --free: #141720;
+    --sa: #1a2235;
+    --club: #1a2830;
+    --act: #1e1a2e;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Main layout */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  /* Timetable grid */
+  .timetable-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    background: var(--card);
+  }
+
+  th {
+    padding: 10px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  th:last-child { border-right: none; }
+  th.period-header {
+    width: 38px;
+    min-width: 38px;
+  }
+
+  td {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    vertical-align: middle;
+    text-align: center;
+  }
+  td:last-child { border-right: none; }
+  tr:last-child td { border-bottom: none; }
+
+  .period-num {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    padding: 8px 4px;
+  }
+
+  /* Cell types */
+  .cell {
+    padding: 6px 4px;
+    min-height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+  }
+  .cell:hover { filter: brightness(1.15); }
+  .cell.free {
+    background: var(--free);
+    cursor: default;
+  }
+  .cell.free:hover { filter: none; }
+
+  .cell.type-class { background: #1a2040; }
+  .cell.type-sa { background: var(--sa); }
+  .cell.type-club { background: var(--club); }
+  .cell.type-act { background: var(--act); }
+
+  .cell-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    word-break: keep-all;
+    text-align: center;
+  }
+  .cell-ban {
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .cell-room {
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+  .cell-tag {
+    font-size: 9px;
+    color: var(--accent3);
+    font-weight: 600;
+    opacity: 0.85;
+  }
+  .free-dot {
+    width: 4px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 50%;
+  }
+
+  /* Day colors */
+  th.day-mon { color: #7dd3fc; }
+  th.day-tue { color: #a78bfa; }
+  th.day-wed { color: #6ee7b7; }
+  th.day-thu { color: #fcd34d; }
+  th.day-fri { color: #f9a8d4; }
+
+  /* Detail panel */
+  .detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .detail-overlay.active { display: flex; align-items: flex-end; justify-content: center; }
+  @media (min-width: 640px) {
+    .detail-overlay.active { align-items: center; }
+  }
+
+  .detail-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px 20px 32px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  .detail-overlay.active .detail-panel {
+    transform: translateY(0);
+  }
+  @media (min-width: 640px) {
+    .detail-panel {
+      border-radius: 20px;
+      max-height: 85vh;
+      transform: scale(0.92) translateY(12px);
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .detail-overlay.active .detail-panel {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .detail-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  @media (min-width: 640px) { .detail-handle { display: none; } }
+
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .detail-subject {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .detail-meta {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .badge-ban { background: rgba(91,127,255,0.18); color: var(--accent); }
+  .badge-room { background: rgba(52,211,153,0.15); color: var(--accent3); }
+  .badge-time { background: rgba(167,139,250,0.15); color: var(--accent2); }
+
+  .close-btn {
+    background: var(--border);
+    border: none;
+    color: var(--text-dim);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .close-btn:hover { background: #3a3e52; }
+
+  .detail-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+
+  .friends-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .friend-chip {
+    background: rgba(91,127,255,0.15);
+    border: 1px solid rgba(91,127,255,0.3);
+    color: #93b4ff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 20px;
+  }
+  .friend-chip.me {
+    background: linear-gradient(135deg, rgba(91,127,255,0.35), rgba(167,139,250,0.25));
+    border-color: var(--accent);
+    color: white;
+    font-weight: 700;
+  }
+
+  .other-ban-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .other-ban-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ban-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+  .other-friends-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .other-chip {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    margin-top: 12px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 480px) {
+    .header { padding: 16px; }
+    .cell { min-height: 48px; padding: 4px 2px; }
+    .cell-name { font-size: 9px; }
+    .cell-ban { font-size: 8px; }
+    .cell-room { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="header-title">박세현의 시간표</div>
+      <div class="header-sub">2026학년도 2학년 1학기 · 20409</div>
+    </div>
+    <div class="header-badge">2학년 4반</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="timetable-wrap">
+    <table id="timetable"></table>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#2a3060"></div>수업 (클릭하면 같은 반 확인)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a2235"></div>SA</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a2830"></div>동아리</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1e1a2e"></div>창체</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#141720"></div>공강</div>
+  </div>
+</div>
+
+<!-- Detail panel -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-handle"></div>
+    <div class="detail-header">
+      <div>
+        <div class="detail-subject" id="detailSubject">—</div>
+        <div class="detail-meta" id="detailMeta"></div>
+      </div>
+      <button class="close-btn" onclick="closePanel()">✕</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const DATA = {"myId":20409,"myName":"박세현","students":[{"id":20101,"name":"김보민","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"L","과학문명사":"O","사회문제와 인문학적 상상력":"M","생활속의 공학":"N","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20102,"name":"이나윤","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"B","확률과 통계":"M","미래주제연구":"O","생활속의 공학":"N","생활속의 데이터 분석":"L","경제":"W","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"Z"}},{"id":20103,"name":"홍지민","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"A3","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"Y","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"L2"}},{"id":20104,"name":"김건호","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"M","생명과학실험Ⅰ":"D22","과학문명사":"N","사회문제와 인문학적 상상력":"O","생활속의 공학":"L","경제":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20105,"name":"김재원","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","과학문명사":"L","사회문제와 인문학적 상상력":"M","생활속의 공학":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20106,"name":"김정훈","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","확률과 통계":"M","미래주제연구":"O","생활속의 공학":"N","알고리즘":"C3","경제":"Z","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"L2"}},{"id":20107,"name":"박상윤","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","생활스포츠":"D1","일반지구과학Ⅰ":"M","과학문명사":"O","사회문제와 인문학적 상상력":"N","알고리즘":"D3","경제":"X","영미문화탐구":"Z","창의적 디자인Ⅰ":"W","화법과 작문":"Y"}},{"id":20108,"name":"박준모","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"M","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","생활속의 데이터 분석":"O","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20109,"name":"변우석","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"M","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","생활속의 데이터 분석":"O","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20110,"name":"양병후","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"M","사회문제와 인문학적 상상력":"N","생활속의 공학":"O","생활속의 데이터 분석":"L","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20111,"name":"이다현","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"L","생명과학실험Ⅰ":"D22","과학문명사":"O","사회문제와 인문학적 상상력":"N","생활속의 공학":"M","경제":"Y","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20112,"name":"이현존","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"A","확률과 통계":"C3","일반생명과학Ⅰ":"L","생활스포츠":"C1","과학문명사":"N","생활속의 공학":"M","생활속의 데이터 분석":"O","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20113,"name":"장연재","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"L","생활속의 공학":"O","생활속의 데이터 분석":"N","알고리즘":"C3","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20114,"name":"정규원","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"M","생활스포츠":"D1","사회문제와 인문학적 상상력":"O","생활속의 공학":"L","생활속의 데이터 분석":"N","알고리즘":"C3","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20115,"name":"최준우","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"L","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20116,"name":"홍민규","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"L","생활스포츠":"D1","과학문명사":"N","생활속의 공학":"M","생활속의 데이터 분석":"O","경제":"Y","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20201,"name":"강효린","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"D","확률과 통계":"B3","과학문명사":"L","사회문제와 인문학적 상상력":"O","생활속의 공학":"M","경제":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"Y"}},{"id":20202,"name":"김예원","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","확률과 통계":"M","생활스포츠":"D1","생활속의 공학":"L","생활속의 데이터 분석":"N","알고리즘":"C3","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20203,"name":"송윤서","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"C3","일반생명과학Ⅰ":"M","생활스포츠":"C1","생명과학실험Ⅰ":"D22","미래주제연구":"O","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","경제":"W","창의적 디자인Ⅰ":"Y","화법과 작문":"X","Public Speaking":"D21"}},{"id":20204,"name":"강은찬","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","사회문제와 인문학적 상상력":"M","생활속의 공학":"L","생활속의 데이터 분석":"N","알고리즘":"D3","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20205,"name":"김건","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"C3","생활스포츠":"C1","일반지구과학Ⅰ":"M","과학문명사":"N","생활속의 공학":"O","경제":"Z","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"L2"}},{"id":20206,"name":"박준호","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"M","생활스포츠":"C1","생명과학실험Ⅰ":"D22","과학문명사":"L","미래주제연구":"O","생활속의 공학":"N","경제":"Y","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"D21"}},{"id":20207,"name":"엄재현","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"M","과학문명사":"O","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","경제":"Y","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"D21"}},{"id":20208,"name":"이경록","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"M","생활스포츠":"D1","과학문명사":"L","사회문제와 인문학적 상상력":"O","생활속의 데이터 분석":"N","경제":"Z","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Y"}},{"id":20209,"name":"이수혁","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"C3","생활스포츠":"D1","과학문명사":"N","생활속의 공학":"M","생활속의 데이터 분석":"O","알고리즘":"D3","경제":"W","창의적 디자인Ⅰ":"X","화법과 작문":"Y","Public Speaking":"L2"}},{"id":20210,"name":"이제하","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"M","생활스포츠":"C1","과학문명사":"O","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","경제":"Y","문학":"X","창의적 디자인Ⅰ":"W","Public Speaking":"D21"}},{"id":20211,"name":"이지상","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"L","과학문명사":"N","사회문제와 인문학적 상상력":"M","생활속의 데이터 분석":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y","화법과 작문":"X"}},{"id":20212,"name":"이충현","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","확률과 통계":"C3","생활스포츠":"C1","과학문명사":"O","생활속의 공학":"M","생활속의 데이터 분석":"N","알고리즘":"D3","경제":"W","문학":"X","창의적 디자인Ⅰ":"Y","Public Speaking":"L2"}},{"id":20213,"name":"이현택","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"A","확률과 통계":"B3","일반지구과학Ⅰ":"M","과학문명사":"L","사회문제와 인문학적 상상력":"N","생활속의 공학":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y","화법과 작문":"X"}},{"id":20214,"name":"장원준","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"M","생명과학실험Ⅰ":"D22","과학문명사":"L","사회문제와 인문학적 상상력":"O","생활속의 공학":"N","경제":"Z","문학":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"X"}},{"id":20215,"name":"최준영","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"M","생활속의 공학":"N","생활속의 데이터 분석":"L","알고리즘":"D3","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20216,"name":"황선우","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"B","확률과 통계":"A3","생활스포츠":"C1","과학문명사":"O","생활속의 공학":"L","생활속의 데이터 분석":"N","알고리즘":"C3","경제":"Y","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20301,"name":"김하경","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"M","과학문명사":"O","사회문제와 인문학적 상상력":"N","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"Y","문학":"W","창의적 디자인Ⅰ":"X"}},{"id":20302,"name":"윤지후","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"B","확률과 통계":"A3","일반생명과학Ⅰ":"L","과학문명사":"O","생활속의 공학":"M","알고리즘":"C3","경제":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"Y"}},{"id":20303,"name":"정서연","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"A3","사회문제와 인문학적 상상력":"O","생활속의 공학":"M","생활속의 데이터 분석":"N","경제":"X","창의적 디자인Ⅰ":"W","화법과 작문":"Y","Public Speaking":"L2"}},{"id":20304,"name":"권우진","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"B","확률과 통계":"M","과학문명사":"L","미래주제연구":"O","생활속의 데이터 분석":"N","경제":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"Y"}},{"id":20305,"name":"김민혁","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"M","생활스포츠":"D1","과학문명사":"N","생활속의 공학":"L","생활속의 데이터 분석":"O","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20306,"name":"김주헌","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"M","과학문명사":"N","생활속의 공학":"O","경제":"Y","문학":"W","창의적 디자인Ⅰ":"X","Public Speaking":"L2"}},{"id":20307,"name":"김진원","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","확률과 통계":"A3","생활스포츠":"D1","과학문명사":"O","생활속의 공학":"M","생활속의 데이터 분석":"N","알고리즘":"D3","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20308,"name":"민준우","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","일반생명과학Ⅰ":"L","생활스포츠":"D1","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20309,"name":"서우진","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"M","생활속의 공학":"O","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20310,"name":"송민건","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"M","생활스포츠":"C1","사회문제와 인문학적 상상력":"N","생활속의 공학":"L","생활속의 데이터 분석":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20311,"name":"윤동현","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"C3","생활스포츠":"D1","과학문명사":"O","생활속의 공학":"M","생활속의 데이터 분석":"N","알고리즘":"D3","경제":"W","창의적 디자인Ⅰ":"X","화법과 작문":"Y","Public Speaking":"L2"}},{"id":20312,"name":"이용준","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"M","생활스포츠":"D1","과학문명사":"L","사회문제와 인문학적 상상력":"O","경제":"Z","문학":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"X"}},{"id":20313,"name":"정지후","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"L","생명과학실험Ⅰ":"D22","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20314,"name":"조신우","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"M","생활스포츠":"D1","미래주제연구":"O","생활속의 공학":"N","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20315,"name":"홍근우","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"C3","생활스포츠":"C1","사회문제와 인문학적 상상력":"M","생활속의 공학":"O","경제":"X","영미문화탐구":"Z","창의적 디자인Ⅰ":"W","화법과 작문":"Y"}},{"id":20316,"name":"홍재민","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"A3","과학문명사":"O","생활속의 공학":"M","경제":"X","영미문화탐구":"Z","창의적 디자인Ⅰ":"W","화법과 작문":"Y"}},{"id":20401,"name":"남세령","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"M","과학문명사":"O","생활속의 공학":"L","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20402,"name":"백승해","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"A3","일반생명과학Ⅰ":"M","생활속의 공학":"O","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20403,"name":"이세아","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"D","확률과 통계":"C3","과학문명사":"N","사회문제와 인문학적 상상력":"M","생활속의 공학":"O","경제":"Y","문학":"X","창의적 디자인Ⅰ":"Z","Public Speaking":"L2"}},{"id":20404,"name":"홍유진","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","일반생명과학Ⅰ":"L","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"X","문학":"W","창의적 디자인Ⅰ":"Y","Public Speaking":"D21"}},{"id":20405,"name":"강민서","subjects":{"(AP)미적분학Ⅰ":"D","확률과 통계":"B3","일반생명과학Ⅰ":"M","과학문명사":"N","사회문제와 인문학적 상상력":"O","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20406,"name":"권용우","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"C3","생활스포츠":"C1","과학문명사":"L","미래주제연구":"O","생활속의 공학":"N","경제":"Z","문학":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"X"}},{"id":20407,"name":"김강윤","subjects":{"(AP)미적분학Ⅰ":"B","확률과 통계":"A3","생활스포츠":"D1","일반지구과학Ⅰ":"M","과학문명사":"L","생활속의 공학":"O","생활속의 데이터 분석":"N","경제":"X","문학":"W","영미문화탐구":"Y","창의적 디자인Ⅰ":"Z"}},{"id":20408,"name":"박민준","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","확률과 통계":"M","일반생명과학Ⅰ":"L","과학문명사":"O","생활속의 공학":"N","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20409,"name":"박세현","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","확률과 통계":"A3","과학문명사":"O","생활속의 공학":"M","생활속의 데이터 분석":"N","알고리즘":"D3","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20410,"name":"박예성","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"C3","생활스포츠":"C1","과학문명사":"N","생활속의 공학":"M","생활속의 데이터 분석":"O","경제":"Z","창의적 디자인Ⅰ":"Y","화법과 작문":"X","Public Speaking":"L2"}},{"id":20411,"name":"박진우","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"C3","생활스포츠":"C1","과학문명사":"L","사회문제와 인문학적 상상력":"M","생활속의 공학":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20412,"name":"박한선","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"A","확률과 통계":"B3","생활스포츠":"C1","사회문제와 인문학적 상상력":"O","생활속의 공학":"M","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}},{"id":20413,"name":"박효성","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"B","확률과 통계":"A3","과학문명사":"L","생활속의 공학":"M","생활속의 데이터 분석":"N","알고리즘":"C3","경제":"Y","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20414,"name":"손정훈","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","(AP)일반화학Ⅰ":"D","확률과 통계":"C3","생활스포츠":"C1","과학문명사":"O","생활속의 공학":"N","생활속의 데이터 분석":"L","경제":"Z","영미문화탐구":"Y","창의적 디자인Ⅰ":"W","화법과 작문":"X"}},{"id":20415,"name":"송예준","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","확률과 통계":"A3","생활스포츠":"D1","일반지구과학Ⅰ":"M","과학문명사":"O","사회문제와 인문학적 상상력":"N","알고리즘":"D3","경제":"Y","문학":"X","영미문화탐구":"Z","창의적 디자인Ⅰ":"W"}},{"id":20416,"name":"장도연","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"L","생명과학실험Ⅰ":"D22","과학문명사":"N","미래주제연구":"O","사회문제와 인문학적 상상력":"M","경제":"X","창의적 디자인Ⅰ":"W","화법과 작문":"Y","Public Speaking":"D21"}},{"id":20501,"name":"권담은","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","일반생명과학Ⅰ":"M","과학문명사":"L","미래주제연구":"O","생활속의 공학":"N","경제":"X","창의적 디자인Ⅰ":"W","화법과 작문":"Y","Public Speaking":"D21"}},{"id":20502,"name":"신채민","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"D","확률과 통계":"A3","사회문제와 인문학적 상상력":"M","생활속의 공학":"N","생활속의 데이터 분석":"O","경제":"X","문학":"W","창의적 디자인Ⅰ":"Y","Public Speaking":"L2"}},{"id":20503,"name":"이영서","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"L","생명과학실험Ⅰ":"D22","사회문제와 인문학적 상상력":"N","생활속의 공학":"M","생활속의 데이터 분석":"O","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20504,"name":"권도윤","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"M","생명과학실험Ⅰ":"D22","과학문명사":"L","생활속의 공학":"N","생활속의 데이터 분석":"O","경제":"W","창의적 디자인Ⅰ":"X","화법과 작문":"Y","Public Speaking":"D21"}},{"id":20505,"name":"길민교","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"C3","생활스포츠":"C1","생명과학실험Ⅰ":"D22","일반지구과학Ⅰ":"M","과학문명사":"L","미래주제연구":"O","사회문제와 인문학적 상상력":"N","경제":"W","문학":"X","창의적 디자인Ⅰ":"Y","Public Speaking":"D21"}},{"id":20506,"name":"마진욱","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"C","확률과 통계":"B3","생활스포츠":"D1","일반지구과학Ⅰ":"M","생활속의 공학":"O","생활속의 데이터 분석":"L","알고리즘":"D3","경제":"X","문학":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"Y"}},{"id":20507,"name":"배병찬","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"D","확률과 통계":"M","사회문제와 인문학적 상상력":"O","생활속의 공학":"L","생활속의 데이터 분석":"N","경제":"Y","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"X"}},{"id":20508,"name":"송지환","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반물리학Ⅰ":"C","(AP)일반화학Ⅰ":"B","확률과 통계":"M","사회문제와 인문학적 상상력":"O","생활속의 공학":"L","생활속의 데이터 분석":"N","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20509,"name":"신재원","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"M","생활속의 공학":"O","생활속의 데이터 분석":"L","경제":"Z","문학":"X","영미문화탐구":"Y","창의적 디자인Ⅰ":"W"}},{"id":20510,"name":"심동하","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반화학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"M","생활스포츠":"C1","생명과학실험Ⅰ":"D22","미래주제연구":"O","생활속의 공학":"N","생활속의 데이터 분석":"L","경제":"W","창의적 디자인Ⅰ":"Y","화법과 작문":"X","Public Speaking":"D21"}},{"id":20511,"name":"윤건우","subjects":{"(AP)미적분학Ⅰ":"C","(AP)일반물리학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"M","생활스포츠":"D1","과학문명사":"L","생활속의 공학":"N","경제":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z","화법과 작문":"Y"}},{"id":20512,"name":"이원준","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반물리학Ⅰ":"A","확률과 통계":"M","생활스포츠":"C1","과학문명사":"N","사회문제와 인문학적 상상력":"O","생활속의 데이터 분석":"L","알고리즘":"C3","경제":"Z","창의적 디자인Ⅰ":"Y","화법과 작문":"X","Public Speaking":"D21"}},{"id":20513,"name":"임지후","subjects":{"(AP)미적분학Ⅰ":"B","(AP)일반화학Ⅰ":"A","확률과 통계":"C3","일반생명과학Ⅰ":"L","생활스포츠":"C1","생명과학실험Ⅰ":"D22","과학문명사":"N","사회문제와 인문학적 상상력":"M","생활속의 공학":"O","경제":"Y","문학":"X","영미문화탐구":"W","창의적 디자인Ⅰ":"Z"}},{"id":20514,"name":"조영준","subjects":{"(AP)미적분학Ⅰ":"A","(AP)일반물리학Ⅰ":"B","확률과 통계":"C3","일반생명과학Ⅰ":"L","생활스포츠":"C1","사회문제와 인문학적 상상력":"M","생활속의 공학":"N","생활속의 데이터 분석":"O","경제":"W","문학":"X","창의적 디자인Ⅰ":"Y","Public Speaking":"D21"}},{"id":20515,"name":"조인성","subjects":{"(AP)미적분학Ⅰ":"D","(AP)일반화학Ⅰ":"A","확률과 통계":"B3","일반생명과학Ⅰ":"M","생활스포츠":"C1","과학문명사":"L","사회문제와 인문학적 상상력":"N","생활속의 공학":"O","경제":"W","영미문화탐구":"Z","창의적 디자인Ⅰ":"X","화법과 작문":"Y"}}],"subjectBanStudents":{"(AP)미적분학Ⅰ":{"D":["김보민","이나윤","김재원","이현존","장연재","최준우","김건","이지상","이현택","황선우","김하경","윤지후","권우진","송민건","강민서","권용우","박한선","박효성","송지환","조인성"],"C":["홍지민","박준모","양병후","이다현","홍민규","엄재현","장원준","최준영","정서연","김민혁","김주헌","이용준","정지후","홍재민","남세령","박세현","장도연","이영서","신재원","윤건우"],"A":["김건호","김정훈","박상윤","강효린","김예원","강은찬","박준호","이제하","이충현","민준우","홍근우","이세아","홍유진","권담은","권도윤","길민교","마진욱","심동하","조영준"],"B":["변우석","정규원","송윤서","이경록","이수혁","김진원","서우진","윤동현","조신우","백승해","김강윤","박민준","박예성","박진우","손정훈","송예준","신채민","배병찬","이원준","임지후"]},"(AP)일반화학Ⅰ":{"B":["김보민","이나윤","김건호","김재원","최준우","박준호","이제하","이지상","김하경","윤지후","권우진","이용준","남세령","길민교","송지환","심동하"],"D":["홍지민","박준모","변우석","양병후","강효린","정서연","홍근우","홍재민","백승해","이세아","박예성","박진우","손정훈","신채민","배병찬"],"A":["이다현","이현존","송윤서","김건","엄재현","이경록","장원준","김주헌","정지후","권용우","장도연","이영서","신재원","윤건우","임지후","조인성"]},"확률과 통계":{"A3":["김보민","홍지민","김재원","최준우","홍민규","이지상","최준영","황선우","김하경","윤지후","정서연","김진원","홍재민","백승해","김강윤","박세현","박효성","송예준","신채민"],"M":["이나윤","김정훈","박준모","변우석","양병후","정규원","김예원","이경록","권우진","김주헌","서우진","이용준","조신우","남세령","박민준","배병찬","송지환","신재원","윤건우","이원준"],"C3":["김건호","이현존","송윤서","김건","박준호","이수혁","이제하","이충현","윤동현","홍근우","이세아","권용우","박예성","박진우","손정훈","권도윤","길민교","심동하","임지후","조영준"],"B3":["박상윤","이다현","장연재","강효린","강은찬","엄재현","이현택","장원준","김민혁","민준우","송민건","정지후","홍유진","강민서","박한선","장도연","권담은","이영서","마진욱","조인성"]},"일반생명과학Ⅰ":{"L":["김보민","이다현","이현존","장연재","최준우","홍민규","이지상","윤지후","민준우","정지후","홍유진","박민준","장도연","이영서","임지후","조영준"],"M":["김건호","송윤서","박준호","엄재현","이제하","장원준","최준영","김하경","김민혁","송민건","백승해","강민서","권담은","권도윤","심동하","조인성"]},"과학문명사":{"O":["김보민","박상윤","이다현","엄재현","이제하","이충현","황선우","김하경","윤지후","김진원","윤동현","홍재민","남세령","박민준","박세현","손정훈","송예준"],"N":["홍지민","김건호","이현존","최준우","홍민규","김건","이수혁","이지상","김민혁","김주헌","민준우","정지후","이세아","홍유진","강민서","박예성","장도연","이원준","임지후"],"L":["김재원","강효린","박준호","이경록","이현택","장원준","권우진","이용준","권용우","김강윤","박진우","박효성","권담은","권도윤","길민교","윤건우","조인성"]},"사회문제와 인문학적 상상력":{"M":["김보민","홍지민","김재원","최준우","강은찬","이지상","민준우","정지후","홍근우","이세아","홍유진","박진우","장도연","신채민","임지후","조영준"],"O":["김건호","정규원","강효린","이경록","장원준","정서연","이용준","강민서","박한선","배병찬","송지환","이원준"],"N":["박상윤","박준모","변우석","양병후","이다현","송윤서","엄재현","이제하","이현택","김하경","송민건","송예준","이영서","길민교","조인성"]},"생활속의 공학":{"N":["김보민","이나윤","김정훈","박준호","장원준","최준영","조신우","권용우","박민준","손정훈","권담은","신채민","권도윤","심동하","윤건우","조영준"],"L":["김건호","박준모","변우석","정규원","김예원","송윤서","강은찬","엄재현","이제하","황선우","김민혁","송민건","남세령","배병찬","송지환"],"O":["김재원","양병후","장연재","김건","이현택","김주헌","서우진","홍근우","백승해","이세아","김강윤","박진우","마진욱","신재원","임지후","조인성"],"M":["이다현","이현존","홍민규","강효린","이수혁","이충현","윤지후","정서연","김진원","윤동현","홍재민","박세현","박예성","박한선","박효성","이영서"]},"경제":{"X":["김보민","박상윤","이현존","장연재","최준우","강효린","윤지후","정서연","권우진","서우진","홍근우","홍재민","홍유진","김강윤","박민준","장도연","권담은","신채민","마진욱","윤건우"],"W":["이나윤","김건호","김재원","송윤서","이수혁","이지상","이충현","이현택","송민건","윤동현","정지후","조신우","남세령","박진우","박한선","권도윤","길민교","심동하","조영준","조인성"],"Y":["홍지민","이다현","홍민규","김예원","강은찬","박준호","엄재현","이제하","황선우","김하경","김주헌","김진원","이세아","박세현","박효성","송예준","배병찬","송지환","임지후"],"Z":["김정훈","박준모","변우석","양병후","정규원","김건","이경록","장원준","최준영","김민혁","민준우","이용준","백승해","강민서","권용우","박예성","손정훈","이영서","신재원","이원준"]},"문학":{"W":["김보민","홍지민","김정훈","이현존","장연재","최준우","김건","박준호","엄재현","장원준","김하경","김주헌","서우진","이용준","홍유진","권용우","김강윤","박민준","신채민","마진욱"],"X":["이나윤","박준모","변우석","정규원","김예원","강은찬","이경록","이제하","이충현","최준영","김진원","이세아","박세현","송예준","이영서","길민교","송지환","신재원","임지후","조영준"]},"영미문화탐구":{"Z":["김보민","김재원","박상윤","이현존","장연재","최준우","이지상","이현택","서우진","송민건","정지후","홍근우","홍재민","남세령","박민준","박진우","박한선","송예준","마진욱","조인성"],"Y":["이나윤","김건호","박준모","변우석","양병후","정규원","장원준","최준영","김민혁","민준우","이용준","조신우","백승해","강민서","권용우","김강윤","손정훈","이영서","신재원"],"W":["이다현","홍민규","강효린","김예원","강은찬","이경록","황선우","윤지후","권우진","김진원","박세현","박효성","배병찬","송지환","윤건우","임지후"]},"창의적 디자인Ⅰ":{"Y":["김보민","이현존","장연재","최준우","송윤서","이경록","이지상","이충현","이현택","서우진","홍유진","박민준","박예성","신채민","길민교","마진욱","심동하","이원준","조영준"],"Z":["이나윤","김건호","이다현","홍민규","강효린","김예원","강은찬","황선우","윤지후","권우진","김진원","조신우","이세아","김강윤","박세현","박효성","배병찬","송지환","윤건우","임지후"],"X":["홍지민","김재원","김정훈","김건","박준호","엄재현","이수혁","장원준","김하경","김주헌","송민건","윤동현","이용준","정지후","남세령","권용우","박진우","박한선","권도윤","조인성"],"W":["박상윤","박준모","변우석","양병후","정규원","이제하","최준영","정서연","김민혁","민준우","홍근우","홍재민","백승해","강민서","손정훈","송예준","장도연","권담은","이영서","신재원"]},"(AP)일반물리학Ⅰ":{"C":["이나윤","김재원","박상윤","강효린","강은찬","이경록","권우진","김진원","민준우","홍유진","박민준","송예준","권담은","신채민","마진욱","배병찬","송지환"],"B":["홍지민","김정훈","홍민규","김예원","김건","이충현","최준영","황선우","정서연","김주헌","홍근우","홍재민","이세아","권용우","박세현","박효성","권도윤","신재원","윤건우","조영준"],"A":["박준모","변우석","양병후","장연재","정규원","이수혁","이현택","김민혁","서우진","송민건","윤동현","이용준","조신우","남세령","박예성","박진우","박한선","손정훈","이원준"]},"미래주제연구":{"O":["이나윤","홍지민","김정훈","최준우","송윤서","박준호","권우진","민준우","정지후","조신우","홍유진","권용우","장도연","권담은","길민교","심동하"]},"생활속의 데이터 분석":{"L":["이나윤","양병후","최준영","김하경","서우진","조신우","백승해","강민서","박한선","손정훈","마진욱","신재원","심동하","이원준"],"O":["박준모","변우석","이현존","홍민규","이수혁","이지상","김민혁","송민건","박예성","신채민","이영서","권도윤","조영준"],"N":["장연재","정규원","김예원","강은찬","이경록","이충현","황선우","정서연","권우진","김진원","윤동현","김강윤","박세현","박효성","배병찬","송지환"]},"Public Speaking":{"L2":["홍지민","김정훈","김건","이수혁","이충현","정서연","김주헌","윤동현","이세아","박예성","신채민"],"D21":["송윤서","박준호","엄재현","이제하","홍유진","장도연","권담은","권도윤","길민교","심동하","이원준","조영준"]},"생명과학실험Ⅰ":{"D22":["김건호","이다현","송윤서","박준호","장원준","정지후","장도연","이영서","권도윤","길민교","심동하","임지후"]},"화법과 작문":{"X":["김건호","양병후","이다현","홍민규","송윤서","이지상","이현택","황선우","김민혁","민준우","조신우","백승해","강민서","박예성","박효성","손정훈","배병찬","심동하","이원준"],"Y":["김재원","박상윤","강효린","이수혁","윤지후","정서연","권우진","송민건","윤동현","정지후","홍근우","홍재민","남세령","박진우","박한선","장도연","권담은","권도윤","윤건우","조인성"]},"알고리즘":{"C3":["김정훈","장연재","정규원","김예원","황선우","김하경","윤지후","서우진","조신우","백승해","강민서","박한선","박효성","이원준"],"D3":["박상윤","강은찬","이수혁","이충현","최준영","김진원","윤동현","박세현","송예준","마진욱"]},"생활스포츠":{"D1":["박상윤","정규원","홍민규","김예원","이경록","이수혁","김민혁","김진원","민준우","윤동현","이용준","조신우","김강윤","송예준","마진욱","윤건우"],"C1":["이현존","송윤서","김건","박준호","이제하","이충현","황선우","송민건","홍근우","권용우","박예성","박진우","박한선","손정훈","길민교","심동하","이원준","임지후","조영준","조인성"]},"일반지구과학Ⅰ":{"M":["박상윤","김건","이현택","김강윤","송예준","길민교","마진욱"]}}};
+
+const ME = DATA.students.find(s => s.id === DATA.myId);
+
+// ─── TIMETABLE DEFINITION ────────────────────────────────────────────────────
+// ban -> periods (from analysis)
+const BAN_TIMES = {
+  "A":  ["월1","월2","목8","목9"],
+  "A3": ["월1","월2","목8"],
+  "B":  ["월7","월8","수1","수2"],
+  "B3": ["월7","월8","수2"],
+  "C":  ["화8","화9","목1","목2"],
+  "C1": ["목1"],
+  "C3": ["화8","화9","목2"],
+  "D":  ["화3","화4","금3","금4"],
+  "D1": ["금4"],
+  "D21":["화3","화4"],
+  "D22":["금3","금4"],  // 생명과학실험 - D22 교실
+  "D3": ["화3","화4","금3"],
+  "L":  ["월3","월4","화7"],
+  "L2": ["월3","월4"],
+  "M":  ["화1","화2","목7"],
+  "N":  ["수5","금1","금2"],
+  "O":  ["화5","화6","금5"],
+  "W":  ["수3","수4"],
+  "X":  ["월5","월6"],
+  "Y":  ["목3","목4"],
+  "Z":  ["목5","목6"]
+};
+
+// period -> col index (0-based, Mon=0..Fri=4)
+const DAYS = ["월","화","수","목","금"];
+const PERIODS_PER_DAY = {
+  "월": ["월1","월2","월3","월4","월5","월6","월7","월8"],
+  "화": ["화1","화2","화3","화4","화5","화6","화7","화8","화9"],
+  "수": ["수1","수2","수3","수4","수5"],
+  "목": ["목1","목2","목3","목4","목5","목6","목7","목8","목9"],
+  "금": ["금1","금2","금3","금4","금5"]
+};
+
+// Special fixed slots for 박세현
+const SPECIAL_SLOTS = {
+  "수6": { type: "sa", label: "SA", color: "type-sa" },
+  "수7": { type: "sa", label: "SA", color: "type-sa" },
+  "수8": { type: "sa", label: "SA", color: "type-sa" },
+  "수9": { type: "sa", label: "SA", color: "type-sa" },
+  "금6": { type: "club", label: "동아리", color: "type-club" },
+  "금7": { type: "club", label: "동아리", color: "type-club" },
+  "금8": { type: "act", label: "창체", color: "type-act" },
+  "금9": { type: "act", label: "창체", color: "type-act" }
+};
+
+// Classroom mapping (분반 -> 교실)
+const CLASSROOMS = {
+  "A": "STEM관 A실", "A3": "STEM관 A실",
+  "B": "STEM관 B실", "B3": "STEM관 B실",
+  "C": "STEM관 C실", "C1": "체육관", "C3": "STEM관 C실",
+  "D": "STEM관 D실", "D1": "체육관", "D3": "STEM관 D실",
+  "D21": "D21호", "D22": "D22호",
+  "L": "강의실 L", "L2": "강의실 L2",
+  "M": "강의실 M", "N": "강의실 N", "O": "강의실 O",
+  "W": "강의실 W", "X": "강의실 X", "Y": "강의실 Y", "Z": "강의실 Z"
+};
+
+// Build period->subject map for ME
+function buildMySchedule() {
+  const schedule = {}; // period -> { subject, ban }
+  for (const [subject, ban] of Object.entries(ME.subjects)) {
+    const times = BAN_TIMES[ban] || [];
+    for (const t of times) {
+      schedule[t] = { subject, ban };
+    }
+  }
+  return schedule;
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const schedule = buildMySchedule();
+  const table = document.getElementById('timetable');
+
+  // Determine max periods per day
+  const allDayPeriods = {
+    "월": ["월1","월2","월3","월4","월5","월6","월7","월8"],
+    "화": ["화1","화2","화3","화4","화5","화6","화7","화8","화9"],
+    "수": ["수1","수2","수3","수4","수5","수6","수7","수8","수9"],
+    "목": ["목1","목2","목3","목4","목5","목6","목7","목8","목9"],
+    "금": ["금1","금2","금3","금4","금5","금6","금7","금8","금9"]
+  };
+
+  // Find max period count
+  let maxPeriods = 0;
+  for (const [day, periods] of Object.entries(allDayPeriods)) {
+    let last = 0;
+    for (let i = 0; i < periods.length; i++) {
+      const p = periods[i];
+      if (schedule[p] || SPECIAL_SLOTS[p]) last = i + 1;
+    }
+    maxPeriods = Math.max(maxPeriods, last);
+  }
+  maxPeriods = Math.max(maxPeriods, 9); // show at least through 9
+
+  // Header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const thEmpty = document.createElement('th');
+  thEmpty.className = 'period-header';
+  thEmpty.textContent = '';
+  headerRow.appendChild(thEmpty);
+  const dayClasses = ["day-mon","day-tue","day-wed","day-thu","day-fri"];
+  DAYS.forEach((day, i) => {
+    const th = document.createElement('th');
+    th.textContent = day + "요일";
+    th.className = dayClasses[i];
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement('tbody');
+  for (let p = 1; p <= maxPeriods; p++) {
+    const tr = document.createElement('tr');
+    const tdNum = document.createElement('td');
+    tdNum.innerHTML = `<div class="period-num">${p}</div>`;
+    tr.appendChild(tdNum);
+
+    DAYS.forEach(day => {
+      const period = `${day}${p}`;
+      const td = document.createElement('td');
+      const slot = schedule[period];
+      const special = SPECIAL_SLOTS[period];
+
+      const div = document.createElement('div');
+
+      if (special) {
+        div.className = `cell ${special.color}`;
+        div.innerHTML = `<span class="cell-tag">${special.label}</span>`;
+      } else if (slot) {
+        div.className = 'cell type-class';
+        div.setAttribute('data-subject', slot.subject);
+        div.setAttribute('data-ban', slot.ban);
+        div.onclick = () => openDetail(slot.subject, slot.ban);
+
+        const room = CLASSROOMS[slot.ban] || slot.ban;
+        const shortName = slot.subject.length > 7 ? slot.subject.substring(0,7)+'…' : slot.subject;
+        div.innerHTML = `
+          <span class="cell-name">${shortName}</span>
+          <span class="cell-ban">${slot.ban}반</span>
+          <span class="cell-room">${room}</span>
+        `;
+      } else {
+        div.className = 'cell free';
+        div.innerHTML = `<div class="free-dot"></div>`;
+      }
+
+      td.appendChild(div);
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────────────────────
+function openDetail(subject, ban) {
+  // Update URL hash
+  history.pushState({ subject, ban }, '', `#${encodeURIComponent(subject)}-${ban}`);
+  showPanel(subject, ban);
+}
+
+function showPanel(subject, ban) {
+  const overlay = document.getElementById('detailOverlay');
+  const subjectEl = document.getElementById('detailSubject');
+  const metaEl = document.getElementById('detailMeta');
+  const bodyEl = document.getElementById('detailBody');
+
+  subjectEl.textContent = subject;
+
+  const times = (BAN_TIMES[ban] || []).join(', ');
+  const room = CLASSROOMS[ban] || ban;
+  metaEl.innerHTML = `
+    <span class="badge badge-ban">${ban}반</span>
+    <span class="badge badge-room">${room}</span>
+    ${times ? `<span class="badge badge-time">${times}</span>` : ''}
+  `;
+
+  // Same-ban friends
+  const allBanData = DATA.subjectBanStudents[subject] || {};
+  const myBanStudents = allBanData[ban] || [];
+  const sameFriends = myBanStudents.filter(n => n !== DATA.myName);
+
+  let html = '';
+
+  html += `<div class="detail-section-title">👥 같은 반 (${ban}반 · ${myBanStudents.length}명)</div>`;
+  html += `<div class="friends-grid">`;
+  html += `<span class="friend-chip me">나 (${DATA.myName})</span>`;
+  sameFriends.forEach(name => {
+    html += `<span class="friend-chip">${name}</span>`;
+  });
+  html += `</div>`;
+
+  // Other bans
+  const otherBans = Object.entries(allBanData).filter(([b]) => b !== ban);
+  if (otherBans.length > 0) {
+    html += `<div class="detail-section-title" style="margin-top:24px">📋 다른 반</div>`;
+    otherBans.forEach(([b, students]) => {
+      const bTimes = (BAN_TIMES[b] || []).join(', ');
+      const bRoom = CLASSROOMS[b] || b;
+      html += `<div class="other-ban-block">`;
+      html += `<div class="other-ban-header"><div class="ban-dot"></div>${b}반 · ${bRoom}${bTimes ? ' · ' + bTimes : ''} (${students.length}명)</div>`;
+      html += `<div class="other-friends-grid">`;
+      students.forEach(name => {
+        html += `<span class="other-chip">${name}</span>`;
+      });
+      html += `</div></div>`;
+    });
+  }
+
+  bodyEl.innerHTML = html;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+  const overlay = document.getElementById('detailOverlay');
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+  if (location.hash) history.back();
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detailOverlay')) closePanel();
+}
+
+// Handle hash navigation (back button)
+window.addEventListener('popstate', () => {
+  const overlay = document.getElementById('detailOverlay');
+  if (!location.hash) {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  } else {
+    // Parse hash and re-open
+    const hash = decodeURIComponent(location.hash.slice(1));
+    const lastDash = hash.lastIndexOf('-');
+    if (lastDash > 0) {
+      const subject = hash.substring(0, lastDash);
+      const ban = hash.substring(lastDash + 1);
+      showPanel(subject, ban);
+    }
+  }
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
